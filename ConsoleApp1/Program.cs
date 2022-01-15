@@ -1,6 +1,7 @@
 ﻿using STUN;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 
 
 
@@ -21,21 +22,37 @@ for (int i = 0; i < 100; ++i)
     Console.WriteLine(result.PublicEndPoint.ToString()); 
 }
 
+
 // Let user connect to another player (via that player's external address)
-Console.WriteLine("Enter an external address to connect to: ");
+Console.Write("Enter an external address to connect to: ");
 IPEndPoint playerEndpoint = IPEndPoint.Parse(Console.ReadLine());
 
 socket.Connect(playerEndpoint);
+if (socket.Connected == false)
+{
+    Console.WriteLine("Failed to connect");
+    return;
+}
+
+
+// Player chat room loop
+Console.WriteLine("Connected!");
 while (socket.Connected)
 {
-    socket.Send(new byte[] { 1, 2, 3, 4 });
+    // Send message
+    Console.Write("Chat message: ");
+    string message = Console.ReadLine();
 
-    byte[] recieved = new byte[1024];
+    socket.Send(Encoding.ASCII.GetBytes(message is not null ? message : string.Empty));
+
+    // Recieve message
+    byte[] recieved = new byte[2048];
     int length = socket.Receive(recieved);
 
-    byte[] message = new byte[length];
-    Array.Copy(recieved, message, length);
-    Console.WriteLine("player: " + message.ToString());
+    byte[] bytesRecieved = new byte[length];
+    Array.Copy(recieved, bytesRecieved, length);
+    string messageRecieved = Encoding.ASCII.GetString(bytesRecieved);
+    Console.WriteLine("player: " + messageRecieved);
 }
 
 Console.WriteLine("Disconnected");
